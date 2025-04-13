@@ -1,0 +1,85 @@
+---
+- name: 加入 PostgreSQL 官方 Yum Repo（PostgreSQL 17）
+  ansible.builtin.get_url:
+    url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+
+- name: 安裝 PostgreSQL 官方 repo
+  ansible.builtin.yum:
+    name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+
+- name: 禁用內建 PostgreSQL 模組（防止套件衝突）
+  ansible.builtin.command: dnf -qy module disable postgresql
+  args:
+    creates: /etc/dnf/modules.d/postgresql.module
+
+- name: 安裝 PostgreSQL 17 Server
+  ansible.builtin.yum:
+    name:
+      - postgresql17-server
+      - postgresql17
+    state: present
+
+- name: 開放防火牆 Postgres Port（5432）
+  ansible.builtin.firewalld:
+    port: 5432/tcp
+    permanent: true
+    state: enabled
+    immediate: yes
+
+- name: 部署 postgresql.conf
+  ansible.builtin.template:
+    src: postgresql.conf.j2
+    dest: /var/lib/pgsql/17/data/postgresql.conf
+    owner: postgres
+    group: postgres
+    mode: 0644
+  notify: restart postgresql
+
+- name: 初始化資料庫（設定 UTF8 + Locale）
+  ansible.builtin.command: >
+    /usr/pgsql-17/bin/postgresql-17-setup initdb --encoding=UTF8 --locale={{ postgresql_locale }}
+  args:
+    creates: /var/lib/pgsql/17/data/PG_VERSION
+
+- name: 部署 pg_hba.conf
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/17/data/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: 0600
+  notify: reload postgresql
+
+- name: 啟動 PostgreSQL 服務
+  ansible.builtin.service:
+    name: postgresql-17
+    state: started
+    enabled: true
+
+- name: 建立資料庫使用者 {{ postgresql_user }}
+  become_user: postgres
+  ansible.builtin.postgresql_user:
+    name: "{{ postgresql_user }}"
+    password: "{{ postgresql_password }}"
+    role_attr_flags: CREATEDB,LOGIN
+
+
+- name: 複製 PostgreSQL 備份腳本
+  ansible.builtin.copy:
+    src: postgresql_backup.sh
+    dest: /var/backups/postgresql_backup.sh
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: restart postgresql
+  ansible.builtin.systemd:
+    name: postgresql-17
+    state: restarted
+
+- name: reload postgresql
+  ansible.builtin.systemd:
+    name: postgresql-17
+    state: reloaded

@@ -1,0 +1,8 @@
+---
+- name: 確認所有主機狀態
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: 回應 Ping
+      ansible.builtin.ping:

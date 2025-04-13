@@ -1,0 +1,5 @@
+- import_playbook: web.yml
+- import_playbook: pg.yml
+- import_tasks:    pg_basebackup.yml
+- import_playbook: infra.yml
+- import_playbook: security.yml

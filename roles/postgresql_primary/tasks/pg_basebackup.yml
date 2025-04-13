@@ -1,0 +1,27 @@
+- name: 停止 PostgreSQL 並清空資料
+  ansible.builtin.systemd:
+    name: postgresql-{{ postgresql_version }}
+    state: stopped
+    enabled: false
+
+- name: 清空資料目錄
+  ansible.builtin.file:
+    path: "{{ postgresql_data_dir }}"
+    state: absent
+
+- name: 從主節點執行 pg_basebackup 並自動建立 standby 設定
+  become_user: postgres
+  ansible.builtin.command: >
+    /usr/pgsql-{{ postgresql_version }}/bin/pg_basebackup \
+      -h {{ postgresql_primary_ip }} \
+      -D {{ postgresql_data_dir }} \
+      -U {{ postgresql_replicator_user }} \
+      -Fp -Xs -P -R
+  environment:
+    PGPASSWORD: "{{ postgresql_replicator_password }}"
+
+- name: 啟動 PostgreSQL 並設為開機啟動
+  ansible.builtin.systemd:
+    name: postgresql-{{ postgresql_version }}
+    state: started
+    enabled: true

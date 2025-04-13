@@ -1,0 +1,20 @@
+cat > myansible/.gitignore <<'EOF'
+# 忽略 SSH 秘鑰與敏感資訊
+*.retry
+*.log
+logs/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.swp
+*.swo
+*.bak
+
+# 忽略系統檔
+.DS_Store
+Thumbs.db
+
+# 忽略 Ansible Vault 加密檔（你若使用 vault 加密密碼，可用 *.vault.yml）
+*.vault.yml
+EOF

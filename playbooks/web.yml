@@ -1,0 +1,6 @@
+- name: 部署 Web 服務（Nginx）
+  hosts: web
+  become: true
+  roles:
+    - role: nginx
+      tags: [web]

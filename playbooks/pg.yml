@@ -1,0 +1,13 @@
+- name: PostgreSQL 主節點佈建
+  hosts: primary
+  become: true
+  roles:
+    - role: postgresql_primary
+      tags: [pg_ha, primary]
+
+- name: PostgreSQL 從節點佈建
+  hosts: replicas
+  become: true
+  roles:
+    - role: postgresql_replica
+      tags: [pg_ha, replica]

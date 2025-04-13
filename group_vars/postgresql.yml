@@ -1,0 +1,26 @@
+postgresql_version: 17
+postgresql_data_dir: /var/lib/pgsql/17/data
+postgresql_user: myadmin
+postgresql_password: mysecretpassword
+postgresql_db: mydatabase
+postgresql_replicator_user: replicator
+postgresql_replicator_password: replica123
+postgresql_primary_ip: 192.168.25.101
+postgresql_replica_ips:
+  - 192.168.25.102
+  - 192.168.25.103
+postgresql_locale: zh_TW.UTF-8
+postgresql_encoding: UTF8
+postgresql_collate: zh_TW.UTF-8
+postgresql_ctype: zh_TW.UTF-8
+postgresql_timezone: Asia/Taipei
+postgresql_listen_addresses: '*'
+postgresql_max_connections: 200
+postgresql_shared_buffers: 512MB
+postgresql_effective_cache_size: 1GB
+postgresql_work_mem: 4MB
+postgresql_maintenance_work_mem: 64MB
+
+postgresql_backup_dbs:
+  - mydatabase
+  - another_db
