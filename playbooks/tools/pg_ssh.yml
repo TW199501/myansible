@@ -1,0 +1,19 @@
+---
+- name: 推送 SSH 金鑰到 PostgreSQL 節點（依據群組與變數）
+  hosts: postgresql
+  gather_facts: false
+  become: false
+  vars:
+    ssh_user: postgres  # 可從 CLI 傳入 --extra-vars 覆蓋
+
+  tasks:
+    - name: 推送 ssh_push.sh 腳本
+      ansible.builtin.copy:
+        src: tools/ssh_push.sh
+        dest: /tmp/ssh_push.sh
+        mode: '0755'
+
+    - name: 執行 ssh_push.sh 傳送 SSH 金鑰
+      ansible.builtin.shell: "/tmp/ssh_push.sh {{ ssh_user }}"
+      args:
+        executable: /bin/bash
