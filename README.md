@@ -4,6 +4,7 @@
 Ansible 自動化專案，使用最佳實務架構，支援多環境（production / staging）、模組化角色與免密 SSH 快速佈署。
 
 ## 專案結構簡介
+```bash
 myansible/
 ├── ansible.cfg                     # Ansible 設定檔
 ├── inventories/                   # 主機清單（多環境）
@@ -28,6 +29,7 @@ myansible/
 ├── logs/                          # Ansible log 檔儲存位置
 ├── .gitignore                     # 忽略檔案設定
 └── README.md                      # 專案說明文件
+```
 
 
 ## 快速開始
