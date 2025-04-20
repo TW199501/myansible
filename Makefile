@@ -1,11 +1,6 @@
 # ====== myansible Makefile ======
 include .env
 export
-# 預設參數
-INVENTORY ?= inventories/production/hosts
-PLAYBOOK  ?= playbooks/tools/ping.yml
-SSH_PUSH  ?= tools/ssh_push.sh
-LOG_PATH  ?= logs/ansible.log
 
 # 指令主入口
 .DEFAULT_GOAL := help
@@ -29,6 +24,9 @@ web:
 
 pg:
 	ansible-playbook -i $(INVENTORY) playbooks/pg.yml
+
+pg_backup:
+	ansible-playbook -i $(INVENTORY) playbooks/tools/pg_backup.yml
 
 staging:
 	ansible-playbook -i inventories/staging/hosts playbooks/site-staging.yml
