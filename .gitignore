@@ -10,6 +10,7 @@ __pycache__/
 *.swp
 *.swo
 *.bak
+.env
 
 # 忽略系統檔
 .DS_Store
