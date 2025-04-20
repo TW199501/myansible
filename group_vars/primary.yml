@@ -1,0 +1,38 @@
+postgresql_version: 17
+
+# 資料目錄根據 OS 分支指定
+postgresql_data_dir_redhat: /var/lib/pgsql/17/data
+postgresql_data_dir_debian: /var/lib/postgresql/17/main
+
+# 共通變數（主從 IP 與認證）
+postgresql_user: myadmin
+postgresql_password: mysecretpassword
+postgresql_db: mydatabase
+
+postgresql_replicator_user: replicator
+postgresql_replicator_password: replica123
+
+postgresql_primary_ip: 192.168.25.115
+postgresql_replica_ips:
+  - 192.168.25.116
+  - 192.168.25.117
+postgresql_allow_subnet: 192.168.25.0/24
+
+# 國際化與效能設定
+postgresql_locale: zh_TW.UTF-8
+postgresql_encoding: UTF8
+postgresql_collate: zh_TW.UTF-8
+postgresql_ctype: zh_TW.UTF-8
+postgresql_timezone: Asia/Taipei
+
+postgresql_listen_addresses: "'*'"
+postgresql_max_connections: 200
+postgresql_shared_buffers: 512MB
+postgresql_effective_cache_size: 1GB
+postgresql_work_mem: 4MB
+postgresql_maintenance_work_mem: 64MB
+
+# 備份資料庫清單
+postgresql_backup_dbs:
+  - mydatabase
+  - another_db
