@@ -1,26 +1,55 @@
 ---
-- name: 推送 SSH 金鑰到 PostgreSQL 節點
+- name: 一鍵推送 Root 與 Postgres SSH 金鑰到 PostgreSQL 節點
   hosts: postgresql
   gather_facts: false
   become: false
-  vars:
-    ssh_user: postgres  # 可由 CLI 覆蓋：--extra-vars "ssh_user=root"
 
-  tasks:
-    - name: 確保每台主機加入 known_hosts（避免卡 yes/no）
+  vars:
+    ssh_user: postgres  # 可以在 CLI 改成 root 或其他帳號
+    ssh_pubkey_path: "~/.ssh/id_rsa.pub"
+
+  pre_tasks:
+    - name: 確認本地 SSH 公鑰是否存在
+      delegate_to: localhost
+      stat:
+        path: "{{ ssh_pubkey_path }}"
+      register: ssh_key_check
+
+    - name: 終止：若找不到 SSH 公鑰，提示使用者先產生
+      delegate_to: localhost
+      fail:
+        msg: |
+          ❌ 找不到 {{ ssh_pubkey_path }}
+          請先執行 ssh-keygen 建立金鑰： ssh-keygen -t rsa -b 4096
+      when: not ssh_key_check.stat.exists
+
+    - name: 讀取本機 SSH 公鑰內容
+      delegate_to: localhost
+      slurp:
+        src: "{{ ssh_pubkey_path }}"
+      register: ssh_pubkey_data
+
+    - name: 將 root 的 SSH 公鑰寫入遠端 root 帳號
+      ansible.builtin.authorized_key:
+        user: root
+        state: present
+        key: "{{ ssh_pubkey_data.content | b64decode }}"
+
+    - name: 確保加入 known_hosts（避免卡 yes/no）
       delegate_to: localhost
       run_once: false
       ansible.builtin.shell: |
         ssh-keyscan -H {{ inventory_hostname }} >> ~/.ssh/known_hosts
       changed_when: false
 
+  tasks:
     - name: 傳送 ssh_push.sh 腳本
       ansible.builtin.copy:
         src: tools/ssh_push.sh
         dest: /tmp/ssh_push.sh
         mode: '0755'
 
-    - name: 執行 ssh_push.sh 腳本（推送金鑰）
+    - name: 執行 ssh_push.sh 腳本（推送至 {{ ssh_user }}）
       ansible.builtin.shell: "/tmp/ssh_push.sh {{ ssh_user }}"
       args:
         executable: /bin/bash

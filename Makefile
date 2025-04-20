@@ -13,6 +13,10 @@ ping:
 pg_ssh:
 	ansible-playbook -i $(INVENTORY) playbooks/tools/pg_ssh.yml --extra-vars "ssh_user=postgres"
 
+# 推送 root金鑰	
+root_key:
+	ansible-playbook -i $(INVENTORY) playbooks/tools/root_key.yml
+
 # 清除 log
 clean-log:
 	@echo "清除 logs/ansible.log..."

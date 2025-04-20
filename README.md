@@ -44,3 +44,8 @@ myansible/
 - 免密 SSH 自動推送（tools/ssh_push.sh）
 - 清晰分離變數與主機清單
 EOF
+
+第一次執行推送金鑰
+ssh-copy-id root@192.168.X.X
+驗證金鑰是否成功推送
+ssh root@192.168.X.X
