@@ -44,3 +44,31 @@ cat > "$PROJECT_NAME/README.md" <<EOF
 EOF
 
 echo "專案初始化完成：$PROJECT_NAME"
+
+# 建立 SSH 金鑰並推送到所有主機以啟用免密登入
+ls ~/.ssh/id_rsa ~/.ssh/id_rsa.pub 2>/dev/null || {
+    echo "SSH 金鑰不存在，請先建立 SSH 金鑰"
+    exit 1
+}
+# 建立金鑰
+ssh-keygen -t rsa -b 4096
+
+# 安裝必要元件
+sudo apt update && sudo apt install -y \
+    ansible \
+    python3 python3-pip \
+    openssh-client \
+    make
+    tree
+
+
+
+
+
+
+
+
+
+
+
+
