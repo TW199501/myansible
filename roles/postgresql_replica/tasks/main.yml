@@ -39,46 +39,55 @@
 - name: 安裝 PostgreSQL 17（Debian/Ubuntu）
   when: ansible_facts['os_family'] == "Debian"
   block:
+    - name: 建立 keyrings 資料夾（如未存在）
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
 
-- name: 建立 keyrings 資料夾（如未存在）
-  ansible.builtin.file:
-  path: /etc/apt/keyrings
-  state: directory
-  mode: '0755'
+    - name: 先移除 pgdg 倉庫與所有衝突金鑰
+      block:
+        - name: 移除 pgdg 倉庫來源檔
+          ansible.builtin.shell: rm -f /etc/apt/sources.list.d/*pgdg*.list
+          changed_when: true
+          ignore_errors: true
 
-- name: 移除舊的 PostgreSQL APT Repository（若存在）
-  when: ansible_facts['os_family'] == "Debian"
-  ansible.builtin.apt_repository:
-  repo: "deb https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
-  filename: pgdg
-  state: absent
+        - name: 移除可能衝突的金鑰檔案
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - /usr/share/keyrings/postgresql.gpg
+            - /etc/apt/keyrings/postgresql.gpg
+          ignore_errors: true
 
-- name: 下載 PostgreSQL GPG 金鑰（.asc）
-  ansible.builtin.get_url:
-    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-    dest: /etc/apt/keyrings/postgresql.asc
-    mode: '0644'
+        - name: apt clean && apt update
+          ansible.builtin.shell: |
+            set -e
+            apt clean
+            apt update
+          changed_when: false
 
-- name: 將金鑰轉為 binary keyring
-  ansible.builtin.shell: |
-    set -euo pipefail
-    gpg --dearmor /etc/apt/keyrings/postgresql.asc -o /etc/apt/keyrings/postgresql.gpg
-  args:
-    creates: /etc/apt/keyrings/postgresql.gpg
+    - name: 透過 keyserver 匯入 PostgreSQL GPG 金鑰
+      ansible.builtin.shell: |
+        gpg --no-default-keyring --keyring /etc/apt/keyrings/postgresql.gpg \
+        --keyserver keyserver.ubuntu.com \
+        --recv-keys 7FCC7D46ACCC4CF8
+      args:
+        creates: /etc/apt/keyrings/postgresql.gpg
 
-- name: 加入 PostgreSQL APT Repo（Ubuntu 22+ 包含 Noble）
-  when: ansible_facts['os_family'] == "Debian"
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/postgresql.gpg arch=amd64] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
-    filename: pgdg
-    state: present
-    update_cache: true
+    - name: 加入 PostgreSQL APT Repo（Ubuntu 22+ 包含 Noble）
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/postgresql.gpg arch=amd64] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+        filename: pgdg
+        state: present
+        update_cache: true
 
-- name: 安裝 PostgreSQL
-  ansible.builtin.apt:
-    name:
-      - postgresql-17
-    state: present
+    - name: 安裝 PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - postgresql-17
+        state: present
 
 # ✅ 共通步驟
 - name: 部署 postgresql.conf（readonly 可選）
