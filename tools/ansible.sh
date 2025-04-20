@@ -1,10 +1,10 @@
 #!/bin/bash
 # 建立精簡版 Ansible 專案目錄
 
-PROJECT_NAME="my-ansible-project"
+PROJECT_NAME="myansible"
 ROLE_NAME="nginx"
 
-echo "📁 建立專案目錄：$PROJECT_NAME"
+echo "建立專案目錄：$PROJECT_NAME"
 
 mkdir -p "$PROJECT_NAME"/{inventories/{production,staging},roles/$ROLE_NAME/{tasks,handlers,templates,vars},playbooks,tools}
 
@@ -43,4 +43,4 @@ cat > "$PROJECT_NAME/README.md" <<EOF
 簡化版的 Ansible 專案架構，包含 nginx role。
 EOF
 
-echo "✅ 專案初始化完成：$PROJECT_NAME"
+echo "專案初始化完成：$PROJECT_NAME"

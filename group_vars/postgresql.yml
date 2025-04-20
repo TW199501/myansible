@@ -5,10 +5,10 @@ postgresql_password: mysecretpassword
 postgresql_db: mydatabase
 postgresql_replicator_user: replicator
 postgresql_replicator_password: replica123
-postgresql_primary_ip: 192.168.25.101
+postgresql_primary_ip: 192.168.25.115
 postgresql_replica_ips:
-  - 192.168.25.102
-  - 192.168.25.103
+  - 192.168.25.116
+  - 192.168.25.117
 postgresql_locale: zh_TW.UTF-8
 postgresql_encoding: UTF8
 postgresql_collate: zh_TW.UTF-8
