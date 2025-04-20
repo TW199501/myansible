@@ -117,5 +117,27 @@ ansible --version
 config file = /home/elf/myansible/ansible.cfg
 ```
 
-這樣 Ansible 才會載入你的設定 ✅
 
+# 有失敗要移除 PostgreSQL 17 的話，請執行以下指令：
+
+```bash
+# 1. 停止 PostgreSQL 服務（支援 systemd 兩種格式）
+systemctl stop postgresql@17-main || systemctl stop postgresql-17
+
+# 2. 完整移除 PostgreSQL 套件
+apt purge -y postgresql-17 postgresql-client-17
+apt autoremove -y
+
+# 3. 刪除資料目錄與設定檔
+rm -rf /var/lib/postgresql/17/main
+rm -rf /etc/postgresql
+rm -rf /var/log/postgresql
+
+# 4. 移除 PostgreSQL 倉庫與金鑰
+rm -f /etc/apt/sources.list.d/*pgdg*.list
+rm -f /etc/apt/keyrings/postgresql.gpg
+rm -f /usr/share/keyrings/postgresql.gpg
+
+# 5. 清理快取並重新整理
+apt clean && apt update
+```
