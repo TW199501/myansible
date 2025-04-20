@@ -49,3 +49,73 @@ EOF
 ssh-copy-id root@192.168.X.X
 驗證金鑰是否成功推送
 ssh root@192.168.X.X
+
+目前這樣仍然 **不對** ❌，因為：
+
+> Ansible **仍然沒有載入你的 `/home/elf/myansible/ansible.cfg`**，而是顯示：
+>
+> ```
+> config file = None
+> ```
+
+而且還出現這個警告：
+
+```
+[WARNING]: Ansible is being run in a world writable directory (/home/elf/myansible), ignoring it as an ansible.cfg source.
+```
+
+---
+
+## 🧯 問題關鍵是：
+
+> `/home/elf/myansible` 是 **world-writable**（即：任何使用者都可以寫入）
+
+Ansible 出於安全性考量，會完全**忽略任何 world-writable 資料夾中的設定檔**（包含 `ansible.cfg`）
+
+---
+
+## ✅ 解法：修正專案資料夾權限
+
+請馬上執行以下指令：
+
+```bash
+chmod o-w /home/elf/myansible
+chmod g-w /home/elf/myansible
+```
+
+說明：
+- `o-w` 表示移除「others（其他用戶）」對該資料夾的寫入權限
+- 不會影響你自己（elf）對該目錄的存取
+
+---
+
+### 🔍 然後確認權限已修復：
+
+```bash
+ls -ld /home/elf/myansible
+```
+
+應該要看到像這樣：
+
+```
+drwxr-xr-x 10 elf elf 4096 Apr 13 21:50 /home/elf/myansible
+```
+
+（注意「沒有 w 在最右邊」）
+
+---
+
+### ✅ 再次執行確認：
+
+```bash
+ansible --version
+```
+
+應該會變成：
+
+```
+config file = /home/elf/myansible/ansible.cfg
+```
+
+這樣 Ansible 才會載入你的設定 ✅
+

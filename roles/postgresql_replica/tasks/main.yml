@@ -1,37 +1,97 @@
----
-- name: 加入 PostgreSQL 官方 Yum Repo（PostgreSQL 17）
-  ansible.builtin.get_url:
-    url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+# 這是 PostgreSQL Replica 節點的 Ansible 任務檔案
+- name: 設定正確的資料目錄變數（跨平台）
+  set_fact:
+    postgresql_data_dir: >-
+      {{
+        (postgresql_data_dir_redhat | default('/var/lib/pgsql/17/data')) if ansible_facts['os_family'] == 'RedHat'
+        else (postgresql_data_dir_debian | default('/var/lib/postgresql/17/main'))
+      }}
 
-- name: 安裝 PostgreSQL 官方 repo
-  ansible.builtin.yum:
-    name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
-    state: present
+# ✅ RedHat 系列處理
+- name: 安裝 PostgreSQL 17（RedHat）
+  when: ansible_facts['os_family'] == "RedHat"
+  block:
+    - name: 加入 PostgreSQL Yum Repo
+      ansible.builtin.get_url:
+        url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        dest: /tmp/pgdg-redhat-repo.rpm
 
-- name: 禁用內建 PostgreSQL 模組（防止套件衝突）
-  ansible.builtin.command: dnf -qy module disable postgresql
+    - name: 安裝 Yum Repo
+      ansible.builtin.yum:
+        name: /tmp/pgdg-redhat-repo.rpm
+        state: present
+
+    - name: 禁用內建 PostgreSQL 模組
+      ansible.builtin.command: dnf -qy module disable postgresql
+      args:
+        creates: /etc/dnf/modules.d/postgresql.module
+
+    - name: 安裝 PostgreSQL
+      ansible.builtin.yum:
+        name:
+          - postgresql17-server
+          - postgresql17
+        state: present
+
+# ✅ Debian/Ubuntu 系列處理
+- name: 安裝 PostgreSQL 17（Debian/Ubuntu）
+  when: ansible_facts['os_family'] == "Debian"
+  block:
+    - name: 建立 keyrings 資料夾（如未存在）
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+- name: 下載並轉換 PostgreSQL GPG 金鑰（binary keyring）
+  when: ansible_facts['os_family'] == "Debian"
+  ansible.builtin.shell: |
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
   args:
-    creates: /etc/dnf/modules.d/postgresql.module
+    creates: /usr/share/keyrings/postgresql.gpg
+  register: key_result
+  notify: update apt cache
 
-- name: 安裝 PostgreSQL 17 Server
-  ansible.builtin.yum:
-    name:
-      - postgresql17-server
-      - postgresql17
+- name: 加入 PostgreSQL APT Repo（Ubuntu 22+ 包含 Noble）
+  when: ansible_facts['os_family'] == "Debian"
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/postgresql.gpg arch=amd64] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    filename: pgdg
     state: present
+    update_cache: yes
 
-- name: 開放防火牆 Postgres Port（5432）
-  ansible.builtin.firewalld:
-    port: 5432/tcp
-    permanent: true
-    state: enabled
-    immediate: yes
+- name: 檢查倉庫是否有效
+  when: ansible_facts['os_family'] == "Debian"
+  ansible.builtin.command: apt-cache policy | grep -q apt.postgresql.org
+  register: repo_check
+  failed_when: repo_check.rc != 0
+  ignore_errors: yes
 
-- name: 部署 postgresql.conf
+- name: 安裝 PostgreSQL 17 (Debian/Ubuntu)
+  hosts: all
+  become: true
+  # ✅ 1. 在 Playbook 的 vars 區塊定義架構變量（全局可用）
+  vars:
+    postgresql_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+    postgresql_version: "17"
+
+  tasks:
+    # ✅ 2. 在需要的地方引用變量（例如 apt_repository 任務）
+    - name: 加入 PostgreSQL APT Repo（多架構支持）
+      when: ansible_facts['os_family'] == "Debian"
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [signed-by=/usr/share/keyrings/postgresql.gpg arch={{ postgresql_arch }}]
+          https://apt.postgresql.org/pub/repos/apt
+          {{ ansible_distribution_release }}-pgdg main
+        filename: pgdg
+        state: present
+
+# ✅ 共通步驟
+- name: 部署 postgresql.conf（readonly 可選）
   ansible.builtin.template:
     src: postgresql.conf.j2
-    dest: /var/lib/pgsql/17/data/postgresql.conf
+    dest: "{{ postgresql_data_dir }}/postgresql.conf"
     owner: postgres
     group: postgres
     mode: 0644
@@ -40,7 +100,7 @@
 - name: 部署 pg_hba.conf
   ansible.builtin.template:
     src: pg_hba.conf.j2
-    dest: /var/lib/pgsql/17/data/pg_hba.conf
+    dest: "{{ postgresql_data_dir }}/pg_hba.conf"
     owner: postgres
     group: postgres
     mode: 0600
@@ -51,7 +111,6 @@
     name: postgresql-17
     state: started
     enabled: true
-
 
 - name: restart postgresql
   ansible.builtin.systemd:

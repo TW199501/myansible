@@ -1,5 +1,21 @@
+# ========================
+# pg_hba.conf - 訪問控制清單
+# 自動部署產生（Ansible + Jinja2）
+# ========================
+
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-local   all             all                                     md5
+
+# 允許本機端所有資料庫
+local   all             all                                     peer
+
+# 允許來自本機的連線（例如 psql）
 host    all             all             127.0.0.1/32            md5
 host    all             all             ::1/128                 md5
-host    all             all             0.0.0.0/0               md5
+
+# 允許主從之間的複寫連線（replicator）
+{% for ip in postgresql_replica_ips %}
+host    replication     {{ postgresql_replicator_user }}     {{ ip }}/32        md5
+{% endfor %}
+
+# 允許區段內所有應用登入（依需求開放）
+host    all             all             {{ postgresql_allow_subnet }}       md5

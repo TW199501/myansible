@@ -1,6 +1,49 @@
+# ========================
+# PostgreSQL 主設定檔
+# 自動部署產生（Ansible + Jinja2）
+# ========================
+
+# ==== 連線設定 ====
 listen_addresses = '{{ postgresql_listen_addresses }}'
 max_connections = {{ postgresql_max_connections }}
-shared_buffers = '{{ postgresql_shared_buffers }}'
-effective_cache_size = '{{ postgresql_effective_cache_size }}'
-work_mem = '{{ postgresql_work_mem }}'
-maintenance_work_mem = '{{ postgresql_maintenance_work_mem }}'
+
+# ==== 地區與編碼 ====
+lc_messages = '{{ postgresql_locale }}'
+lc_monetary = '{{ postgresql_locale }}'
+lc_numeric  = '{{ postgresql_locale }}'
+lc_time     = '{{ postgresql_locale }}'
+default_text_search_config = 'pg_catalog.simple'
+timezone = '{{ postgresql_timezone }}'
+client_encoding = '{{ postgresql_encoding }}'
+
+# ==== 記憶體調整 ====
+shared_buffers = {{ postgresql_shared_buffers }}
+effective_cache_size = {{ postgresql_effective_cache_size }}
+work_mem = {{ postgresql_work_mem }}
+maintenance_work_mem = {{ postgresql_maintenance_work_mem }}
+
+# ==== WAL 與寫入效能 ====
+wal_level = replica
+synchronous_commit = on
+archive_mode = off
+max_wal_senders = 10
+wal_keep_size = 64MB
+
+# ==== Logging ====
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%a.log'
+log_truncate_on_rotation = on
+log_rotation_age = 1d
+log_rotation_size = 0
+log_min_duration_statement = 500
+log_line_prefix = '%m [%p] %u@%d '
+
+# ==== 複寫（僅主節點啟用 hot_standby = on） ====
+hot_standby = on
+
+# 你可在角色中透過條件插入更多 replication 設定（如 synchronous_standby_names）
+
+# ==== 其他建議 ====
+# random_page_cost = 1.1
+# effective_io_concurrency = 200

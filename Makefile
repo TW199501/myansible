@@ -53,6 +53,8 @@ tree:
 fix-perms:
 	@echo "設定所有 .sh 腳本為可執行..."
 	find . -type f -name "*.sh" -exec chmod +x {} \;
+	chmod o-w $(PWD)
+	chmod g-w $(PWD)
 	@echo "權限設定完成：所有 .sh 腳本已加上執行權限"
 
 # 🆘 指令說明
