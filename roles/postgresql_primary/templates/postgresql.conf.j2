@@ -4,7 +4,7 @@
 # ========================
 
 # ==== 連線設定 ====
-listen_addresses = '{{ postgresql_listen_addresses }}'
+listen_addresses = {{ postgresql_listen_addresses }}
 max_connections = {{ postgresql_max_connections }}
 
 # ==== 地區與編碼 ====

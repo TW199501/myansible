@@ -16,6 +16,7 @@ sudo apt install -y \
     tree \
     jq \
     sshpass \
+    ansible-lint \
     curl
 
 echo "🟢 安裝 Python 工具：ansible-lint, yamllint, pre-commit, ansible-navigator..."
