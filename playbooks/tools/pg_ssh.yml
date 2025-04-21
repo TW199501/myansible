@@ -19,7 +19,7 @@
       delegate_to: localhost
       fail:
         msg: |
-          ❌ 找不到 {{ ssh_pubkey_path }}
+          找不到 {{ ssh_pubkey_path }}
           請先執行 ssh-keygen 建立金鑰： ssh-keygen -t rsa -b 4096
       when: not ssh_key_check.stat.exists
 

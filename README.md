@@ -1,9 +1,9 @@
 ﻿
-# myansible
+#### myansible
 
 Ansible 自動化專案，使用最佳實務架構，支援多環境（production / staging）、模組化角色與免密 SSH 快速佈署。
 
-## 專案結構簡介
+#### 專案結構簡介
 ```bash
 myansible/
 ├── ansible.cfg                     # Ansible 設定檔
@@ -32,23 +32,24 @@ myansible/
 ```
 
 
-## 快速開始
+#### 快速開始
 
 1. 安裝 Ansible（建議在 WSL 或 Linux）
 2. 建立免密 SSH：`./tools/ssh_push.sh root`
 3. 測試所有主機連線：`ansible-playbook playbooks/ping_all.yml`
 
-## 📦 支援功能
+#### 支援功能
 - 多環境切換（production / staging）
 - 多角色模組（roles/）
 - 免密 SSH 自動推送（tools/ssh_push.sh）
 - 清晰分離變數與主機清單
-EOF
 
-第一次執行推送金鑰
-ssh-copy-id root@192.168.X.X
-驗證金鑰是否成功推送
-ssh root@192.168.X.X
+#### 推送金鑰
+
+- 第一次執行推送金鑰
+- ssh-copy-id root@目標IP
+- 驗證金鑰是否成功推送
+- ssh root@目標IP
 
 目前這樣仍然 **不對** ❌，因為：
 
